@@ -1,0 +1,39 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Create plugin zip
+        run: |
+          # Create clean directory with just plugin files
+          mkdir posts-grid
+          cp posts-grid.php posts-grid/
+          cp uninstall.php posts-grid/
+          cp readme.txt posts-grid/
+          cp LICENSE posts-grid/
+          cp README.md posts-grid/
+
+          # Create zip
+          zip -r posts-grid-${{ steps.version.outputs.VERSION }}.zip posts-grid
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: posts-grid-${{ steps.version.outputs.VERSION }}.zip
+          generate_release_notes: true
